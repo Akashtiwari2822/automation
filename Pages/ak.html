@@ -1,0 +1,440 @@
+@extends('admin.layouts.master') 
+
+@section('title') {{ transLang('create_sale_invoice') }} @endsection
+ 
+@section('content')
+    <section class="content-header">
+        <ol class="breadcrumb">
+            <li><a href="{{ route('admin.dashboard') }}"><i class="fa fa-dashboard"></i> {{ transLang('dashboard') }}</a></li>
+            <li><a href="{{ route('admin.sale_invoices.index') }}"> {{ transLang('all_sale_invoices') }} </a></li>
+            <li class="active">{{ transLang('create_sale_invoice') }}</li>
+        </ol>
+    </section>
+
+    <section class="content">
+        <div class="row">
+            <div class="col-md-12">
+                <div class="box box-primary">
+                    <div class="box-header with-border">
+                        <h3 class="box-title">{{ transLang('create_sale_invoice') }}</h3>
+                    </div>
+                    <div class="box-body">
+                        <p class="alert message_box hide"></p>
+                        <form class="form-horizontal" id="create-form">
+                            @csrf
+                            <input type="hidden" name="customer_state_code" value="{{ $settings->state_code }}">
+                            <div class="row">
+                                <div class="col-sm-6">
+                                    <div class="form-group">
+                                        <label class="col-sm-3 control-label required">{{ transLang('invoice_no') }}</label>
+                                        <div class="col-sm-7">
+                                            @if ($settings->invoice_prefix || $settings->invoice_postfix)
+                                                <div class="input-group">
+                                                    @if ($settings->invoice_prefix)
+                                                        <span class="input-group-addon">{{ $settings->invoice_prefix }}</span>
+                                                    @endif
+                                                    <input type="text" class="form-control" name="invoice_no" placeholder="{{ transLang('invoice_no') }}" value="{{ $invoice_no + 153 }}">
+                                                    @if ($settings->invoice_postfix)
+                                                        <span class="input-group-addon">{{ $settings->invoice_postfix }}</span>
+                                                    @endif
+                                                </div>
+                                            @else
+                                                <input type="text" class="form-control" name="invoice_no" placeholder="{{ transLang('invoice_no') }}" value="{{ $invoice_no }}">
+                                            @endif
+                                        </div>
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="col-sm-3 control-label required">{{ transLang('invoice_date') }}</label>
+                                        <div class="col-sm-7">
+                                            <input type="text" class="form-control date-picker" name="invoice_date" placeholder="{{ transLang('invoice_date') }}" value="{{ date('Y-m-d') }}">
+                                        </div>
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="col-sm-3 control-label required">{{ transLang('invoice_period') }}</label>
+                                        <div class="col-sm-7">
+                                            <input type="text" class="form-control date-picker" name="invoice_period" placeholder="{{ transLang('invoice_period') }}">
+                                        </div>
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="col-sm-3 control-label required">{{ transLang('sac_code') }}</label>
+                                        <div class="col-sm-7">
+                                            <input type="text" class="form-control" name="sac_code" placeholder="{{ transLang('sac_code') }}">
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-sm-6">
+                                    <div class="form-group">
+                                        <label class="col-sm-3 control-label required">{{ transLang('customer') }}</label>
+                                        <div class="col-sm-7">
+                                            <select class="form-control select2-class" name="customer" data-placeholder="{{ transLang('choose') }}">
+                                                <option value=""></option>
+                                                @if ($customers->isNotEmpty())
+                                                    @foreach ($customers as $customer)
+                                                        <option value="{{ $customer->id }}">{{ $customer->name }}</option>
+                                                    @endforeach
+                                                @endif
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="col-sm-3 control-label required">{{ transLang('address') }}</label>
+                                        <div class="col-sm-7">
+                                            <textarea class="form-control" name="address" placeholder="{{ transLang('address') }}" rows="1"></textarea>
+                                        </div>
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="col-sm-3 control-label required">{{ transLang('state_code') }}</label>
+                                        <div class="col-sm-7">
+                                            <input type="text" class="form-control" name="state_code" placeholder="{{ transLang('state_code') }}">
+                                        </div>
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="col-sm-3 control-label">{{ transLang('gstin_no') }}</label>
+                                        <div class="col-sm-7">
+                                            <input type="text" class="form-control" name="gstin_no" placeholder="{{ transLang('gstin_no') }}">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </form>
+                        <table id="items_tbl" class="table table-striped table-bordered table-hover dataTable">
+                            <thead>
+                                <tr>
+                                    <th width="30px">{{ transLang('sr_no') }}</th>
+                                    <th>{{ transLang('date') }}</th>
+                                    <th>{{ transLang('awb_no') }}</th>
+                                    <th>{{ transLang('origin') }}</th>
+                                    <th>{{ transLang('destination') }}</th>
+                                    <th>{{ transLang('mode') }}</th>
+                                    <th>{{ transLang('consignee') }}</th>
+									<th>{{ transLang('pcs') }}</th>
+                                    <th colspan="2">{{ transLang('weight') }}</th>
+                                    <th>{{ transLang('rate') }}</th>
+                                    <!--<th>{{ transLang('fright_charges') }}</th>-->
+                                    <th>{{ transLang('fuel_charges') }}</th>
+                                    <th>{{ transLang('fov_charges') }}</th>
+                                    <th>{{ transLang('oda_charges') }}</th>
+                                    <th>{{ transLang('handling_charges') }}</th>
+                                    <th>{{ transLang('docket_charges') }}</th>
+                                    <th>{{ transLang('green_tax') }}</th>
+                                    <th>{{ transLang('other') }}</th>
+                                    <th>{{ transLang('total') }}</th>
+                                    <th>{{ transLang('action') }}</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr id="hidden_row" style="display: none;">
+                                    <td></td>
+                                    <td><input type="text" class="form-control date date-picker" placeholder="{{ transLang('date') }}"></td>
+                                    <td><input type="text" class="form-control awb_no" placeholder="{{ transLang('awb_no') }}"></td>
+                                    <td><input type="text" class="form-control origin" placeholder="{{ transLang('origin') }}"></td>
+                                    <td><input type="text" class="form-control destination" placeholder="{{ transLang('destination') }}"></td>
+                                    <td><input type="text" class="form-control mode" placeholder="{{ transLang('mode') }}"></td>
+                                    <td><input type="text" class="form-control consignee" placeholder="{{ transLang('consignee') }}"></td>
+                                    <td><input type="text" class="form-control pcs" placeholder="{{ transLang('pcs') }}"></td>
+                                    <td><input type="text" class="form-control weight" placeholder="{{ transLang('weight') }}"></td>
+                                    <td>
+                                        <select class="form-control weight_unit" style="min-width: 100px;">
+                                            @foreach (transLang('weight_arr') as $key => $val)
+                                                <option value="{{ $key }}">{{ $val }}</option>
+                                            @endforeach
+                                        </select>
+                                    </td>
+                                    <td><input type="text" class="form-control rate" placeholder="{{ transLang('rate') }}"></td>
+                                    <!--<td><input type="text" class="form-control calc-total fright_charges" placeholder="{{ transLang('fright_charges') }}"></td>--->
+                                    <td><input type="text" class="form-control calc-total fuel_charges" placeholder="{{ transLang('fuel_charges') }}"></td>
+                                    <td><input type="text" class="form-control calc-total fov_charges" placeholder="{{ transLang('fov_charges') }}"></td>
+                                    <td><input type="text" class="form-control calc-total oda_charges" placeholder="{{ transLang('oda_charges') }}"></td>
+                                    <td><input type="text" class="form-control calc-total handling_charges" placeholder="{{ transLang('handling_charges') }}"></td>
+                                    <td><input type="text" class="form-control calc-total docket_charges" placeholder="{{ transLang('docket_charges') }}"></td>
+                                    <td><input type="text" class="form-control calc-total green_tax " placeholder="{{ transLang('green_tax') }}"></td>
+                                    <td><input type="text" class="form-control other calc-total" placeholder="{{ transLang('other') }}"></td>
+                                    <td><input type="text" class="form-control calc-total total" placeholder="{{ transLang('total') }}"></td>
+                                    <td><a href="javascript:void();" class="delete-row"><i class="fa fa-trash fa-lg"></i></a></td>
+                                </tr>
+                                <tr>
+                                    <td>1</td>
+                                    <td><input type="text" class="form-control date date-picker" placeholder="{{ transLang('date') }}"></td>
+                                    <td><input type="text" class="form-control awb_no" placeholder="{{ transLang('awb_no') }}"></td>
+                                    <td><input type="text" class="form-control origin" placeholder="{{ transLang('origin') }}"></td>
+                                    <td><input type="text" class="form-control destination" placeholder="{{ transLang('destination') }}"></td>
+                                    <td><input type="text" class="form-control mode" placeholder="{{ transLang('mode') }}"></td>
+                                    <td><input type="text" class="form-control consignee" placeholder="{{ transLang('consignee') }}"></td>
+                                    <td><input type="text" class="form-control pcs" placeholder="{{ transLang('pcs') }}"></td>
+                                    <td><input type="text" class="form-control weight" placeholder="{{ transLang('weight') }}"></td>
+                                    <td>
+                                        <select class="form-control weight_unit" style="min-width: 100px;">
+                                            @foreach (transLang('weight_arr') as $key => $val)
+                                                <option value="{{ $key }}">{{ $val }}</option>
+                                            @endforeach
+                                        </select>
+                                    </td>
+                                    <td><input type="text" class="form-control rate" placeholder="{{ transLang('rate') }}"></td>
+                                    <!---<td><input type="text" class="form-control calc-total fright_charges" placeholder="{{ transLang('fright_charges') }}"></td>--->
+                                    <td><input type="text" class="form-control calc-total fuel_charges" placeholder="{{ transLang('fuel_charges') }}"></td>
+                                    <td><input type="text" class="form-control calc-total fov_charges" placeholder="{{ transLang('fov_charges') }}"></td>
+                                    <td><input type="text" class="form-control calc-total oda_charges" placeholder="{{ transLang('oda_charges') }}"></td>
+                                    <td><input type="text" class="form-control calc-total handling_charges" placeholder="{{ transLang('handling_charges') }}"></td>
+                                    <td><input type="text" class="form-control calc-total docket_charges" placeholder="{{ transLang('docket_charges') }}"></td>
+                                    <td><input type="text" class="form-control calc-total green_tax" placeholder="{{ transLang('green_tax') }}"></td>
+                                    <td><input type="text" class="form-control other calc-total" placeholder="{{ transLang('other') }}"></td>
+                                    <td><input type="text" class="form-control calc-total total totalvalue" placeholder="{{ transLang('total') }}"></td>
+                                    <td><a href="javascript:void();" class="add-row"><i class="fa fa-plus fa-lg"></i></a></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                        <div class="row">
+                            <div class="col-sm-9"><strong>{{ transLang('total_consignments') }}: </strong> <span id="total_items">1</span></div>
+                            <div class="col-sm-3">
+                                <table class="table table-bordered">
+                                   
+                                    <tr>
+                                        <th class="text-center">{{ transLang('subtotal') }}</th>
+                                        <td>&nbsp;</td>
+                                        <td id="total">00.00</td>
+                                    </tr>
+                                    <tr id="igst-box">
+                                        <th class="text-center">{{ transLang('igst') }}</th>
+                                        <td>{{ $settings->igst }}%</td>
+                                        <td>00.00</td>
+                                    </tr>
+                                    <tr id="cgst-box">
+                                        <th class="text-center">{{ transLang('cgst') }}</th>
+                                        <td>{{ $settings->cgst }}%</td>
+                                        <td>00.00</td>
+                                    </tr>
+                                    <tr id="sgst-box">
+                                        <th class="text-center">{{ transLang('sgst') }}</th>
+                                        <td>{{ $settings->sgst }}%</td>
+                                        <td>00.00</td>
+                                    </tr>
+                                    <tr>
+                                        <th class="text-center">{{ transLang('bill_total') }}</th>
+                                        <td>&nbsp;</td>
+                                        <td id="bill_total">00.00</td>
+                                    </tr>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="box-footer">
+                        <div class="col-sm-offset-1 col-sm-6">
+                            <button type="button" class="btn btn-success" id="createBtn"><i class="fa fa-check"></i> {{ transLang('create') }}</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+@endsection
+ 
+@section('scripts')
+    <script type="text/javascript">
+        jQuery(function($) {
+            let selectedCustomer = null, 
+                fuelCharges = 0; 
+            const CUSTOMERS = @json($customers);
+            
+            $('[name="invoice_period"]').daterangepicker({
+                opens: 'left',
+                startDate: moment().subtract(2, 'days'),
+                endDate: moment(),
+                locale: { format: 'YYYY-MM-DD' },
+            }, (start, end) => {});
+
+            $(document).on('change', '[name="customer"]', function (e) {
+                let val = $(this).val();
+                CUSTOMERS.forEach(el => {
+                    if (el.id == val) {
+                        selectedCustomer = el;
+                        return;
+                    }
+                });
+
+                $('[name="address"]').val(selectedCustomer.address);
+                $('[name="state_code"]').val(selectedCustomer.state_code);
+                $('[name="gstin_no"]').val(selectedCustomer.gst_no);
+               
+
+                if (selectedCustomer.state_code != '{{ $settings->state_code }}') {
+                    $('#igst-box').show();
+                    $('#cgst-box,#sgst-box').hide();                    
+                } else {
+                    $('#cgst-box,#sgst-box').show();                    
+                    $('#igst-box').hide();
+                }
+                calcTotalAmt();
+            });
+
+            $(document).on('click', '.add-row', function (e) {
+                e.preventDefault();
+                let clone = $('#hidden_row').clone().removeAttr('id style');
+                clone.find('td:first').text($('#items_tbl tbody tr:not(#hidden_row)').length + 1);
+                $('#items_tbl tbody').append(clone);
+                $('#total_items').text($('#items_tbl tbody tr:not(#hidden_row)').length);
+
+                $('#items_tbl tbody tr:last .date-picker').datepicker({
+                    autoclose: true,
+                    todayHighlight: true,
+                    format: 'yyyy-mm-dd'
+                });
+            });
+
+            $(document).on('click', '.delete-row', function (e) {
+                e.preventDefault();
+                $(this).closest('tr').remove();
+                $('#items_tbl tbody tr:not(#hidden_row)').each(function (i, el) {
+                    $(el).find('td:first').text(i+1);
+                });
+                $('#total_items').text($('#items_tbl tbody tr:not(#hidden_row)').length);
+            });
+
+            $(document).on('change', '.weight_unit', function (e) {
+                let $tr = $(this).closest('tr');
+                calcRowTotal($tr, $(this).val());
+            });
+
+            function calcRowTotal($tr, val) {
+                if (val == 1) {
+                    let weight = isNaN(parseFloat($tr.find('.weight').val())) ? 0 : parseFloat($tr.find('.weight').val());
+                    let rate = isNaN(parseFloat($tr.find('.rate').val())) ? 0 : parseFloat($tr.find('.rate').val());
+
+                    $tr.find('.total').val((weight * rate).toFixed(2));
+                    calcTotalAmt($tr);
+                }
+            }
+
+            $(document).on('keyup', '#items_tbl .calc-total,#items_tbl .rate,#items_tbl .weight', function (e) {
+                let $tr = $(this).closest('tr');
+                let weight_unit = $tr.find('.weight_unit').val();
+                calcRowTotal($tr, weight_unit);
+                calcTotalAmt();
+            });
+
+            function calcTotalAmt($tr) {
+                let subtotal = 0,
+                    other_total = 0,
+                   // fright_charges = 0,
+                    fuel_charges = 0,
+                    fov_charges = 0,
+                    oda_charges = 0,
+                    handling_charges = 0,
+                    docket_charges = 0,
+                    green_tax = 0,
+                    total_amount = 0;
+
+                $('#items_tbl tbody tr:not(#hidden_row)').each(function (i, el) {
+                    subtotal += isNaN(parseFloat($(el).find('.total').val())) ? 0 : parseFloat($(el).find('.total').val());
+                    other_total += isNaN(parseFloat($(el).find('.other').val())) ? 0 : parseFloat($(el).find('.other').val());
+					//fright_charges += isNaN(parseFloat($(el).find('.fright_charges').val())) ? 0 : parseFloat($(el).find('.fright_charges').val());
+					fuel_charges += isNaN(parseFloat($(el).find('.fuel_charges').val())) ? 0 : parseFloat($(el).find('.fuel_charges').val());
+					fov_charges += isNaN(parseFloat($(el).find('.fov_charges').val())) ? 0 : parseFloat($(el).find('.fov_charges').val());
+					oda_charges += isNaN(parseFloat($(el).find('.oda_charges').val())) ? 0 : parseFloat($(el).find('.oda_charges').val());
+					handling_charges += isNaN(parseFloat($(el).find('.handling_charges').val())) ? 0 : parseFloat($(el).find('.handling_charges').val());
+					docket_charges += isNaN(parseFloat($(el).find('.docket_charges').val())) ? 0 : parseFloat($(el).find('.docket_charges').val());
+					green_tax += isNaN(parseFloat($(el).find('.green_tax').val())) ? 0 : parseFloat($(el).find('.green_tax').val());
+                });
+           //   alert($tr);
+               //$('#items_tbl tbody tr:(#hidden_row)').each(function (i, el) {
+                 //	green_t1ax += isNaN(parseFloat($(el).find('.total').val())) ? 0 : parseFloat($(el).find('.total').val());
+               //       });
+				//let rate_new = ('.totalvalue').val();
+             // alert(green_t1ax);
+              
+              $('#items_tbl tr').each(function() {
+                    var customerId = $(this).find("td:first").html();    
+                });
+              alert(customerId);
+
+                $('#subtotal').text(subtotal);
+                
+                
+                
+
+                $('#other_amount').text(other_total);
+            //  alert(subtotal);
+             // alert(other_total);
+                total_amount = subtotal + fuel_charges + fov_charges + oda_charges + handling_charges + docket_charges + green_tax + other_total;
+                $tr.find('.total').val(total_amount);
+                $('#total').text(total_amount);
+
+                if (selectedCustomer != null) {
+                    if (selectedCustomer.state_code != '{{ $settings->state_code }}') {
+                        tax_amount = total_amount * '{{ $settings->igst }}' * 0.01;
+                        $('#igst-box td:last').text((total_amount * '{{ $settings->igst }}' * 0.01).toFixed(2));
+                    } else {
+                        tax_amount = (total_amount * '{{ $settings->cgst }}' * 0.01) + (total_amount * '{{ $settings->sgst }}' * 0.01);
+                        $('#cgst-box td:last').text((total_amount * '{{ $settings->cgst }}' * 0.01).toFixed(2));
+                        $('#sgst-box td:last').text((total_amount * '{{ $settings->sgst }}' * 0.01).toFixed(2));
+                    }
+                }
+
+                $('#bill_total').text((total_amount + tax_amount).toFixed(2));
+            }
+
+            $(document).on('click','#createBtn',function(e) {
+                e.preventDefault();
+                let btn = $(this);
+                let loader = $('.message_box');
+                let items = [];
+
+                $('#items_tbl tbody tr:not(#hidden_row)').each(function (i, el) {
+                    items.push({
+                        date: $(el).find('.date').val(),
+                        awb_no: $(el).find('.awb_no').val(),
+                        origin: $(el).find('.origin').val(),
+                        destination: $(el).find('.destination').val(),
+                        mode: $(el).find('.mode').val(),
+                        consignee: $(el).find('.consignee').val(),
+                      
+                        pcs: $(el).find('.pcs').val(),
+                        weight: $(el).find('.weight').val(),
+                        weight_unit: $(el).find('.weight_unit').val(),
+                        rate: $(el).find('.rate').val(),
+                        //fright_charges: $(el).find('.fright_charges').val(),
+                        fuel_charges: $(el).find('.fuel_charges').val(),
+                        fov_charges: $(el).find('.fov_charges').val(),
+                        oda_charges: $(el).find('.oda_charges').val(),
+                        handling_charges: $(el).find('.handling_charges').val(),
+                        docket_charges: $(el).find('.docket_charges').val(),
+                        green_tax: $(el).find('.green_tax').val(),
+                        other: $(el).find('.other').val(),
+                        total: $(el).find('.total').val(),
+                    });
+                });
+
+                $.ajax({
+                    dataType: 'json',
+                    type: 'POST',
+                    url: "{{ route('admin.sale_invoices.create') }}",
+                    data: $('#create-form').serialize() + '&' + $.param({
+                        items,
+                     
+                        total: $('#total').text(),
+                        igst: $('#igst-box td:last').text(),
+                        igst_percent: '{{ $settings->igst }}',
+                        cgst: $('#cgst-box td:last').text(),
+                        cgst_percent: '{{ $settings->cgst }}',
+                        sgst: $('#sgst-box td:last').text(),
+                        sgst_percent: '{{ $settings->sgst }}',
+                        other_amount: $('#other_amount').text(),
+                        bill_total: $('#bill_total').text(),
+                    }),
+                    beforeSend: () => {
+                        btn.attr('disabled',true);
+                        loader.html(`{!! transLang('loader_message') !!}`).removeClass('hide alert-danger alert-success').addClass('alert-info');
+                    },
+                    error: (jqXHR, exception) => {
+                        btn.attr('disabled',false);
+                        loader.html(formatErrorMessage(jqXHR, exception)).removeClass('alert-info').addClass('alert-danger');
+                    },
+                    success: response => {
+                        btn.attr('disabled',false);
+                        loader.html(response.message).removeClass('alert-info').addClass('alert-success');
+                        location.replace('{{ route("admin.sale_invoices.index")}}');
+                    }
+                });
+            });
+        });
+    </script>
+@endsection
